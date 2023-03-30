@@ -1,0 +1,85 @@
+Nathan Oliver
+Lab 4: Normalizing Uver
+Oct 21, 2022
+
+START
+ride = {rider, driver, start, end, miles, car, payment, fare}
+
+PK = {rider, driver}
+
+D1 = {rider} → {payment}
+D2 = {driver} → {car}
+D3 = {start, end} → {miles, fare}
+D4 = {fare} → {miles}
+
+STEP 1:
+1. Starting Schema: ride
+2. Decompose on {rider} → {payment}
+3. Results: 
+    - ride1 = {rider, driver, start, end, miles, car, fare} / key = {rider, driver}
+    - payment_info = {rider, payment} / key = {rider}
+4. SQL
+
+CREATE TABLE ride1 AS (SELECT rider, driver, start, end, miles, car, fare FROM ride);
+ALTER TABLE ride1 ADD CONSTRAINT ride1_pkey PRIMARY KEY(rider, driver);
+
+CREATE TABLE payment_info AS (SELECT DISTINCT rider, payment FROM ride);
+ALTER TABLE payment_info ADD CONSTRAINT payment_info_pkey PRIMARY KEY(rider);
+
+STEP 2:
+1. Starting Schema: ride1
+2. Decompose on {driver} → {car}
+3. Results:
+    - ride2 = {rider, drvier, start, end, miles, fare} / key = {rider, driver}
+    - car_info = {driver, car} \ key = {driver}
+4. SQL
+
+CREATE TABLE ride2 AS (SELECT rider, driver, start, end, miles, fare FROM ride1);
+ALTER TABLE ride2 ADD CONSTRAINT ride2_pkey PRIMARY KEY(rider, driver);
+
+CREATE TABLE car_info AS (SELECT DISTINCT driver, car FROM ride1);
+ALTER TABLE car_info ADD CONSTRAINT car_info_pkey PRIMARY KEY(driver);
+
+STEP 3:
+1. Starting Schema: ride2
+2. Decompose on {start, end} → {miles, fare}
+3. Results:
+    - ride3 = {rider, driver, start, end} / key = {rider, driver}
+    - trip_info = {start, end, miles, fare} / key = {start, end}
+4. SQL
+
+CREATE TABLE ride3 AS (SELECT rider, driver, start, end FROM ride2);
+ALTER TABLE ride3 ADD CONSTRAINT ride3_pkey PRIMARY KEY(rider, driver);
+
+CREATE TABLE ride_info AS (SELECT DISTINCT start, end, miles, fare FROM ride2);
+ALTER TABLE ride_info ADD CONSTRAINT ride_info_pkey PRIMARY KEY(start, end);
+
+STEP 4:
+1. Starting Schema: trip_info
+2. Decompose on {fare} → {miles} (although I'm pretty sure it should be {miles} → {fare})
+3. Results:
+    - trip_info1 = {start, end, miles} / key = {start, end}
+    - fare_compute = {miles, fare} / key = {miles}
+4. SQL
+
+CREATE TABLE ride_info1 AS (SELECT start, end, miles FROM ride_info);
+ALTER TABLE ride_info1 ADD CONSTRAINT ride_info1_pkey PRIMARY KEY(start, end);
+
+CREATE TABLE fare_compute AS (SELECT miles, fare FROM ride_info);
+ALTER TABLE fare_compute ADD CONSTRAINT fare_compute_pkey PRIMARY KEY(miles);
+
+FINAL DATABASE WITH APPLICABLE FD's
+
+ride3 = {rider, driver, start, end} / key = {rider, driver} / FD: {rider, driver} → {start, end}
+payment_info = {rider, payment} / key = {rider} / FD: {rider} → {payment}
+car_info = {driver, car} / key = {driver} / FD: {driver} → {car}
+trip_info1 = {start, end, miles} / key = {start, end} / FD: {start, end} → {miles}
+fare_compute = {miles, fare} / key = {miles} / FD: {miles} → {fare}
+
+
+
+
+
+
+
+
